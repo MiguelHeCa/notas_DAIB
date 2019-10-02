@@ -1,0 +1,133 @@
+---
+title: "DAIB"
+author: "José Miguel Hernández Cabrera"
+date: "10/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Protocolo de investigación
+
+### Definición
+
+Documento que permite pasar la concepción de un problema de investigación a su realización.
+
+Debe plantear los conocimientos que existen sobre el tema de interés y demostrar la pertinencia, relevancia y fiabilidad de proyecto. Aquí es donde se encuentra el rigor.
+
+### Función
+
+Ayudar al investigador a organizar el estudio lógicamente. (Diseñar el tamaño de muestra, establecimiento de metodología).
+
+**TAREA** Plantear un protocolo de investigación.
+
+### Organización del protocolo
+
+* Título y resumen
+* Antecedentes y estado actual
+* Hipótesis y objetivos
+* METODOLOGÍA
+
+#### Título
+
+Debe expresar de forma clara y precisa
+
+#### Resumen
+
+#### Antecedentes y Estado actual del tema
+
+*Definición y el estado del Problema*
+¿Cuál es el problema que se pretende investigar?
+¿Cuáles son los conocimientos existentes en relación con el problema?
+
+*Justificación y pertinencia del Problema*
+Avances esperados
+Importancia
+Beneficio
+
+Factibilidad del Proyecto
+
+#### Metodología
+
+*Diseño*
+Tener en cuenta el comité de ética (autorización)
+
+Definición de la *población* con los criterios de inclusión y exclusión
+
+*Tamaño muestral*
+Considerar pequeñas muestras. En Big Data, los coeficientes usuales se vuelven insignificantes.
+
+*Identificación de variables*
+
+*Validez y Fiabilidad*
+Saber si son válidas o no
+
+*Información debe contener un proyecto de investigación*
+
+
+### La muestra
+
+#### Probabilísticos
+
+* Aleatorio simple
+* Estratificado
+* Por conglomerados
+
+Estratificación:  realizas estratos homogéneo para buscar heterogeneidad considerando aleatoriedad. 
+**Afijación**: tamaño que tiene el estratro.
+
+Conglomerado: Población dividida en agrupaciones naturales (conglomerados), se selecciona una muestra al azar de esas agrupaciones y se analizan todos los individuos. buscas homogeneidad considerando aleatoriedad
+
+#### No probabilísticos
+
+* Por cuotas (accidental)
+Se aseguran cuotas (proporcionalidad de individuos), pero sin selección aleatoria. Utilizados en estudios sociológicos y epidemiológicos.
+
+* De casos consecutivos
+Se seleccionan los sujetos que cumplen los criterios de inclusión especificados en el protocolo, a medida que se captan. Utilizados en ensayos clínicos.
+Mejor práctica: donde al respondiente le tocó el tratamiento. Condición de tratar. Considerar el grupo en el que le tocó.
+
+* Muestreo a criterio (opinático o intencional)
+Seleccionan los individuos más apropiados. 
+Se incluyen grupos supuestamente típicos.
+Posibles cumplidores de una determinada dieta.
+Utilizados en sondeos preelectorales de zonas que en anteriores votaciones han marcado tendencias de voto.
+
+* A conveniencia (casual o incidental)
+Se eligen aquellos miembros de la población accesible de los que se puede disponer con facilidad.
+Se usan para efectuar los pretest en los diseños de cuestionarios, donde se comprueba si las preguntas son comprensibles.
+
+* Inclusión de voluntarios
+Participan individuos de forma voluntaria. Presenta problemas de autoselección.
+
+* Muestreo intencional
+Utilizado en muestras pequeñas y muy específicas. Casos extremos, poco usuales, máxima variación.
+
+* Bola de nieve
+*Leo A. Goodman* Muestreo con informantes estratégicos. Revista **Annals of Mathematical Statistics, v. 32**. Aplicado a miembros de la población en estudio que se conocen entre sí.
+
+* Mistery shopping
+Utilizada en marketing
+
+Por rutas aleatorias
+
+### Determinación del tamaño de la muestra
+Error de estimación 
+La probabilidad que sea verdadero de la muestra respecto a la población
+
+Nivel de confianza
+Qué tantas veces sucederá lo que esperas en tu marco muestral
+
+Poblaciones grandes (infinitas)
+
+En el error muestral hay que suponer que p y q son 0.5. **p** es un escenario, **q** es el contrario de **p**.
+
+Para sacar una n con una confianza alpha calculas el error de 95.44
+
+### Poblaciones finitas
+
+Ver: relación hiperbólica del error muestral e intervalo de confianza.
+
+
