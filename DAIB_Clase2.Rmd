@@ -1,0 +1,101 @@
+---
+title: "DIAB_clase2"
+author: "José Miguel Hernández Cabrera"
+date: "10/3/2019"
+output: 
+  html_document:
+    mathjax: "default"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Tipo de variables
+
+#### Cualitativas
+
+##### Nominales
+
+##### Ordinales
+
+#### Cuantitativas
+
+##### Discretas
+
+##### Continuas
+
+### Medidas de dispersión
+
+#### Media
+mu, x_barra
+
+#### Recorrido
+
+#### Varianza
+
+#### Desviación típica
+Solo informa la dispersión de datos respecto a una media específica de las observaciones. Es solo una estadística descriptiva.
+
+#### Coeficiente de variación
+Hace comparable la variabilidad entre unidades distintas
+#### Error estándar
+
+
+#### Error estándar vs Desviación típica
+SE es usado más para cuestiones de inferencia estadística, sobre todo con distribuciones de probabilidad. Ver cómo cambia la media en cada muestreo, dentro de una variable $\bar{x}$. Permite ver la variación entre diversas muestras.
+
+#### Percentiles
+Mediana
+recorrido intercuartílico $RI = Q_3 - Q_1$ Se deshace de los valores más grandes y de los valores más pequeños.
+Usar mediana descriptiva, y un test intercuartílico. Mediana o percentil.
+
+#### Caja de bigotes. Box-plot
+Creado por Tukey en 1977.
+La caja va de $Q_1$ a $Q_3$ con la línea de la $Mediana$. Si la línea está pegado a uno de los cuartiles, podría indicar que la distribución de los datos no es normal.
+los bigotes se ponen hasta $P_{90}$ y $P_{10}$.
+Datos discordantes, aberrantes, outliers: comprendido entre 1.5 y 3 veces el $RI$.
+Poner atención a los datos $>3$ veces el $RI$.
+
+En revistas los cuartiles se manejan al revés.
+
+#### Determinación del tamaño de la muestra
+
+* Error de estimación $|\hat{p} - p| \leq E$
+* El nivel de confianza $[prob(\hat{p}-p) < E] = 1 - \alpha$
+
+##### Poblaciones grandes
+$I^{1-\alpha}_{p} = \left[\hat{p} \pm z_{\alpha/2}\sqrt{\dfrac{pq}{n}}\right]$
+
+##### Poblaciones grandes (infinitas)
+$E = Z_{\alpha/2}\sqrt{\dfrac{pq}{n}}$
+
+$n = \dfrac{z^2_{\alpha/2}pq}{E^2}$
+
+donde $p = q = 0.5$ y nivel de confianza = $95.5\%$
+Esto se hace porque son escenarios donde existe máxima variabilidad
+```{r}
+0.3*0.7
+0.5*0.5
+0.4*0.6
+```
+
+##### Calculo del tamaño muestral
+##### Poblaciones finitas
+$I^{1-\alpha}_{p} = [\hat{p} \pm z_{\alpha/2}\sqrt{\frac{pq}{n}}]$
+
+$E = Z_{\alpha/2}\sqrt{\frac{pq}{n}}$
+
+$n = \frac{z^2_{\alpha/2}pq}{E^2}$
+
+##### Error muestral y tamaó de la muestra
+
+Tarea probar
+```{r}
+error = seq(from = 0.01, to = 0.1, by = 0.001)
+N = 57022
+p = 0.5
+q = 0.5
+ci = 95.5
+```
+

@@ -1,18 +1,21 @@
 ---
-title: "DAIB"
+title: "DAIB_clase1"
 author: "José Miguel Hernández Cabrera"
-date: "10/2/2019"
-output:
-  html_document:
-    mathjax: "default"
+date: "10/3/2019"
+output: 
+  pdf_document:
+    latex_engine: "xelatex"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```
 $$\sum_{n=1}^{10} n^2$$
+```
 
+$$\sum_{n=1}^{10} n^2$$
 
 # Protocolo de investigación
 
