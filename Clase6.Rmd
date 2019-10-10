@@ -1,0 +1,121 @@
+---
+title: "Clase6"
+author: "José Miguel Hernández Cabrera"
+date: "10/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Inferencia Estadística
+
+**Experimiento determinístico**: Aquel que al repetirlo en idénticas condiciones proporciona los mismos resultados.
+
+**Experimento aleatorio**: Aquel que al repetirlo en idénticas condiciones NO proporciona los mismos resultados en cada experiencia particular. La estadística se basa en esto
+
+**Suceso elemental**: Cada uno de los resultados de un experimiento aleatorio
+
+**Espacio muestral**: Conjunto de sucesos elementales.
+
+Probabilidad asociada a un suceso: El límite al que tiende la frecuencia relativa.
+
+Ley de Laplace
+$$P(A) = \dfrac{no. casos favorables}{no. casos posibles}$$
+$0\leq probabilidades \leq 1$
+
+**Variable aleatoria**:
+
+*Discreta*
+Esperanza matemática
+Media:
+$$\mu = F[X] = \sum_ix_ip_i$$
+Varianza:
+$$\sigma^2 = V[X]=\sum_i \frac{}{}$$
+**Continua**
+
+
+####Distribuciones de probabilidad
+
+Distribución Normal
+
+$$\bar{X} \equiv \left( \mu \frac{\sigma}{\sqrt{n}} \right)$$
+* La variabilidad de la media es mucho más pequeña que la de valores individuales
+* Se concentra alrededor del verdadero valor.
+* Podemos encontrarnos con valores extremos, pero el valor central es "cercano" al valor en la población.
+
+$$P\left(\mu - 2\frac{\sigma}{\sqrt{n}} \leq \mu \leq + 2\frac{\sigma}{\sqrt{n}} \right) = 0.9544$$
+
+$$P\left(\mu - 1.96\frac{\sigma}{\sqrt{n}} \leq \mu \leq + 1.96\frac{\sigma}{\sqrt{n}} \right) = 0.95$$
+
+#### Intervalo de confianza
+
+La estimación puntual se utiliza para sustituir algo que no conozco por algo que no conozco.
+
+$$I^{1-\alpha}_{\mu}=\bar{x}Z_{\alpha/2}\tfrac{\hat{s}}{\sqrt{n}}$$
+Tener confianza del 95%, aseguro que de 100 veces que haga el intervalo, 5 pueden no salir. Ya no es una probabilidad
+
+### Contrastes de hipótesis
+
+Pasos:
+
+1. Hipótesis nula $H_0$, Hipótesis alternativa $H_1$ o $H_a$.
+2. Nivel de significación ($\alpha$).
+3. Construir una fórmula con los datos de la muestra que seguirá una distribución de probabilidad conocida. (Estadígrafo de contraste)
+4. Región crítica y región de aceptación (RC y RA).
+5. Conclusiones (estadísticas y no estadísticas: médicas, biológicas, económicas, etc.)
+
+#### Hipótesis
+
+$H_0$: es la hipótesis que se formula y que se quiere contrastar. Será la que se acepte o rechace como consecuencia del contraste.
+
+#### Nivel de significación
+
+Probabilidad de cometer error tipo I, es decir, la probabilida de rechazar la hipótesis nula siendo cierta. Habitualmente 1% y 5%.
+
+Error tipo I: rechazo indebido de $H_0$
+Error tipo II: aceptación indebida de la $H_0$
+
+Nivel de significación ($\alpha$): Probabilidad de cometer el error tipo I.
+Potencia del contraste ($1-\beta$): PRobabilidad de rechazar $H_0$, siendo falsa.
+
+$\beta$ denota el riesgo tipo II
+
+#### Estadígrafo de contraste
+
+Una variable aleatoria con una distribución de probabilidad dada y que toma un valor para cada muestra.
+
+Todas las funciones pueden estandarizarse (tipificar o convertir en una normal).
+
+#### Región crítica y Región de aceptación
+
+RA: Conjunto de valores del estadístico de contraste que nos llevan a aceptar la $H_0$.
+
+Aceptamos la hipótesis nula si la media de nuestra muestra está en el 95% de las medias más probable cuando la hipótesis es cierta.
+
+Contraste bilateral
+Dos regiones críticas y una RA
+
+Contraste unilaterales
+Una región crítica y una RA
+
+#### Conclusiones
+Estadísticas y científicas
+
+Con la muestra no tengo información suficiente
+Si acepto la hipótesis nula al 5 o al 1% se dice que el contraste es "no significativo".
+
+#### Grados de libertad
+
+Son n-1. Incógnitas vs conocidas.
+
+#### Contrastes no paramétricos
+
+Comparan Medianas
+Trabajan sobre rangos de orden
+Son menos potentes
+
+No Normales: Independientes, U de Mann Wittney
+Se aproxima a una normal: U de Wilcoxon

@@ -1,0 +1,32 @@
+---
+title: "Clase5"
+author: "José Miguel Hernández Cabrera"
+date: "10/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+```
+
+## Correlación lineal
+
+```{r gráfica}
+x = seq(from = -6, to = 6, by = 1)
+
+y = -7 + 0.5 * x^2
+
+datos = data.frame(x = x, y = y)
+
+ggplot(datos, aes(x, y)) +
+  geom_line() + 
+  geom_point() +
+  annotate("text", x = 0, y = 10, label = "y = -7 + 0.5x^2") +
+  theme_light()
+
+# TODO
+# Hacer gif de variación de variables con r y r^2.
+```
+

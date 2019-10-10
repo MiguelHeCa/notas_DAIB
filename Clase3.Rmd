@@ -1,0 +1,28 @@
+---
+title: "Clase3"
+author: "José Miguel Hernández Cabrera"
+date: "10/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Cuestionario de respuesta directa
+No se admite interpretación. Responder en el orden que quiera
+
+Cuestionario de respuesta indirecta
+Admite interpretaciones o aclaraciones, debe respetarse el orden en que se pregunta.
+
+Pre codificado
+Peso asignado a las opcoiones de respuesta. No permiten conocer los matices en la opinión de las personas.
+
+preguntas abiertas
+
+preguntas cerradas o dicotómicas
+
+Preguntas categorizadas
+
+
+
