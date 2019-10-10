@@ -119,3 +119,75 @@ Son menos potentes
 
 No Normales: Independientes, U de Mann Wittney
 Se aproxima a una normal: U de Wilcoxon
+
+## Prácticas
+
+En SPSS. La distribución Kolmogorov Smirnoff contrasta si los datos son normales o no.
+
+Si Sig. asintótica >.2 para aceptar o rechazar la hipótesis nula.
+
+Para contraste bilateral, con datos normales.
+"Diferencia de medias" > t-test una muestra
+
+Plantear un contraste unilateral
+
+```{r}
+library(foreign)
+
+datos = read.spss("data/ACADEMIAS.sav", to.data.frame = TRUE)
+
+ks.test(datos$PRECIO, "pnorm")
+
+t.test(datos$PRECIO, mu = 53)
+
+```
+
+```{r}
+dat1 = datos[datos$TIPO_ACADEMIA == "SEMANAL",]
+dat2 = datos[datos$TIPO_ACADEMIA != "SEMANAL",]
+```
+
+media de fin de semana igual a media de semanal.
+
+Es de medias.
+
+Prueba de Levene para la igualdad de las varianzas. La varianza del grupo 1 es igual al grupo 2 vs si son distintas.
+
+Sig. .305. Mayor 0.05, acepto la igualdad de varianzas.
+
+Prueba t, ambos sig. son mayores 0.05, por lo que da igual quién sea interesa.
+
+Intervalo de confianza para la diferencia.
+Si hay medias comunes, no se puede rechazar la igualdad de medias.
+La diferencia de medias igual a 0
+Si al IC contiene al cero, no puedo rechazar la hipótesis nula.
+
+```{r}
+
+library(foreign)
+library(RcmdrMisc)
+ACADEMIAS = readSPSS("data/ACADEMIAS.sav", tolower = FALSE)
+
+normalityTest(~PRECIO, test = "lillie.test", data = ACADEMIA)
+with(ACADEMIA, (t.test(PRECIO, mu = 53)))
+
+SEMANAL = subset(ACADEMIAS, subset = TIPO_ACADEMIA == "SEMANAL")
+normalityTest(~PRECIO, test = "lillie.test", data = SEMANAL)
+
+FIN = subset(ACADEMIAS, subset = TIPO_ACADEMIA != "SEMANAL")
+normalityTest(~PRECIO, test = "lillie.test", data = FIN)
+
+# Grupos de muestras independientes
+with(ACADEMIAS, tapply(PRECIO, TIPO_ACADEMIA, var, na.rm = TRUE))
+
+leveneTest(PRECIO ~ TIPO_ACADEMIA, data = ACADEMIAS, center = "mean")
+
+# Variables pareadas
+normalityTest(~ESCALA1, test = "lillie.test", data = ACADEMIA)
+normalityTest(~ESCALA2, test = "lillie.test", data = ACADEMIA)
+
+#
+with(ACADEMIAS, wilcox.test(ESCALA1, ESCALA2, alternative = "two.sided", paired = T))
+
+```
+
