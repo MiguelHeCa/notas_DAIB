@@ -186,6 +186,9 @@ leveneTest(PRECIO ~ TIPO_ACADEMIA, data = ACADEMIAS, center = "mean")
 normalityTest(~ESCALA1, test = "lillie.test", data = ACADEMIA)
 normalityTest(~ESCALA2, test = "lillie.test", data = ACADEMIA)
 
+# Dado que una de las variables resultó paramétrica y la otra no, vamos con una
+# Prueba wilcoxson
+
 #
 with(ACADEMIAS, wilcox.test(ESCALA1, ESCALA2, alternative = "two.sided", paired = T))
 
