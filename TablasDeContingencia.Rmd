@@ -1,0 +1,240 @@
+---
+title: "Tablas de contingencia"
+author: "José Miguel Hernández Cabrera"
+date: "10/16/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(data.table)
+library(gmodels)
+```
+
+## Tablas de contingencia
+
+Las tablas de contingencia que recogen información sobre dos variables aleatorias cualitativas
+
+Los datos son **frecuencias**.
+
+Buscamos que que las variables en estudio están relacionadas, por lo que 
+la hipótesis nula es si son independientes.
+
+```{r}
+obs = data.table(
+  Trat = c(
+    rep("Trat1", times = 150),
+    rep("Trat2", times = 120),
+    rep("Trat3", times = 130),
+    rep("Trat4", times = 160)
+    )
+  )
+
+obs[, resultado := c(
+  c(rep("Peor", times = 7), rep("Igual", times = 28), rep("Mejor", times = 115)),
+  c(rep("Peor", times = 15), rep("Igual", times = 20), rep("Mejor", times = 85)),
+  c(rep("Peor", times = 10), rep("Igual", times = 30), rep("Mejor", times = 90)),
+  c(rep("Peor", times = 5), rep("Igual", times = 40), rep("Mejor", times = 115))
+    )]
+
+obs[, ':=' (Trat = factor(Trat, levels = c("Trat1", "Trat2", "Trat3", "Trat4")),
+            resultado = factor(resultado, levels = c("Peor", "Igual", "Mejor")))]
+
+```
+
+
+Las hipótesis serían si la respuesta depende del tratamiento
+
+$$fe_{ij} = $$
+
+# Cálculo del valor experimental
+
+```{r}
+table(obs$Trat, obs$resultado)
+
+```
+
+Conocer el tratamiento más contribuye.La trabla de contribuciones del $\chi^2$. Voy a ver si el trat2.
+
+Creo una nueva tabla apartando el elemento trat2 y creamos una tabla con las demás. Los tres tratamiento funcionan como uno solo.
+
+Los grados de libertad son `4` el $g.l. = (I -1) (J-1)$ 
+
+Realizar el contraste de independencia para comprobar si aceptamos $H_0$.
+
+Conclusión: rechazo $H_0$ porque el tratamiento 2 difiere del resto.
+
+```{r}
+CrossTable(obs$Trat, obs$resultado)
+```
+
+```{r}
+chisq.test(obs$Trat, obs$resultado)
+```
+
+
+AHora se hace lo mismo que en filas pero con columnas. Se hace otra de contingencia.
+
+Contraste de las respuestas igual y mejor frente a peor
+
+Conclusión: Rechazo $H_0$ -> Respuesta y tratamiento están relacionados. Respuesta y tratamiento están relacionados. Trat2 con los que empeoran.
+
+La condicionas es signifivamente superior a la misma proporción con los tratamientos 1, 3 y 4
+
+Para los tratamientos 1, 3 y 4, la respuesta no depende del tratamiento.
+
+En SPSS
+
+### Práctica 
+
+Vamos a plantear una investigación socio-política  que pretende poner de manifiesto la  relevancia del problema regional en la transición  y en el proceso constituyente.
+
+Veamos si los datos siguientes correspondientes a una encuesta efectuada 11 años después de que fuese aprobada la Constitución, que recoge la opinión sobre la forma en la que se llevó a cabo la transición según región, corroboran la hipótesis de que el problema del regionalismo seguía patente en España.
+```{r}
+
+opi = data.table(
+  Region = factor(
+    c(rep("País Vasco", times = 100), rep("Cataluña", times = 100), rep("Galicia", times = 100), rep("Resto", times = 100)),
+    levels = c("País Vasco", "Cataluña", "Galicia", "Resto")
+  )
+)
+
+opi[, Opinión := factor(
+  c(
+    rep("Sí", times = 60), rep("No", times = 19), rep("Ns/Nc", times = 21),
+    rep("Sí", times = 81), rep("No", times = 10), rep("Ns/Nc", times = 9),
+    rep("Sí", times = 79), rep("No", times = 8), rep("Ns/Nc", times = 13),
+    rep("Sí", times = 83), rep("No", times = 5), rep("Ns/Nc", times = 12)
+    ),
+  levels = c("Sí", "No", "Ns/Nc")
+)]
+
+```
+```{r}
+with(opi, CrossTable(Opinión, Region, prop.r = F, prop.c = F, prop.t = F, prop.chisq = F, chisq = T))
+```
+
+
+```{r}
+with(opi, chisq.test(Opinión, Region))
+```
+Rechazamos hipótesis nula.
+
+
+Ahora vemos sin el País Vasco
+```{r}
+opi_s_vasco = opi[Region != "País Vasco"]
+
+with(opi_s_vasco, CrossTable(Opinión, Region, prop.r = F, prop.c = F, prop.t = F, prop.chisq = F, chisq = T))
+```
+Por la $\chi^2$ Vemos que el resto de vasriables no tiene relación con la opinión.
+
+Ahora juntamos las variables al resto del país vasco
+
+```{r}
+opi[, catgalres := ifelse(Region == "País Vasco", "País Vasco", "Resto de España")]
+
+with(opi, CrossTable(Opinión, catgalres, prop.r = F, prop.c = F, prop.t = F, prop.chisq = T, chisq = T))
+```
+Vemos que el País Vasco contribuye bastante, al tener una 
+
+Ahora por filas. Primero intentemos con el sí
+
+
+
+```{spss}
+WEIGHT BY Frecuencia.
+```
+Ahora la frecuencia es un peso entre las variables, pero no se tocan más.
+
+```{spss}
+CROSSTABS
+  /TABLES=Opinion BY Region
+  /FORMAT=AVALUE TABLES
+  /STATISTICS=CHISQ
+  /CELLS=COUNT
+  /COUNT ROUND CELL.
+
+```
+
+La opinión sí depende de dónde está el individuo.
+Ahora queremos saber qué opinión y de dónde
+
+```{spss}
+USE ALL.
+COMPUTE filter_$=(Region  ~= 1).
+VARIABLE LABELS filter_$ 'Region  ~= 1 (FILTER)'.
+VALUE LABELS filter_$ 0 'Not Selected' 1 'Selected'.
+FORMATS filter_$ (f1.0).
+FILTER BY filter_$.
+EXECUTE.
+
+```
+
+```{spss}
+FILTER OFF.
+USE ALL.
+EXECUTE.
+RECODE Region (1=1) (2=2) (3=2) (4=2) INTO catgalres.
+EXECUTE.
+
+```
+```{spss}
+USE ALL.
+COMPUTE filter_$=(Opinion  ~= 1).
+VARIABLE LABELS filter_$ 'Opinion  ~= 1 (FILTER)'.
+VALUE LABELS filter_$ 0 'Not Selected' 1 'Selected'.
+FORMATS filter_$ (f1.0).
+FILTER BY filter_$.
+EXECUTE.
+CROSSTABS
+  /TABLES=Opinion BY catgalres
+  /FORMAT=AVALUE TABLES
+  /STATISTICS=CHISQ
+  /CELLS=COUNT ASRESID
+  /COUNT ROUND CELL.
+
+```
+
+```{spss}
+FILTER OFF.
+USE ALL.
+EXECUTE.
+RECODE Opinion (1=1) (ELSE=2) INTO nons.
+EXECUTE.
+CROSSTABS
+  /TABLES=nons BY Region
+  /FORMAT=AVALUE TABLES
+  /STATISTICS=CHISQ
+  /CELLS=COUNT ASRESID
+  /COUNT ROUND CELL.
+
+CROSSTABS
+  /TABLES=nons BY Region
+  /FORMAT=AVALUE TABLES
+  /STATISTICS=CHISQ
+  /CELLS=COUNT ASRESID
+  /COUNT ROUND CELL.
+
+```
+
+```{spss}
+
+```
+
+```{spss}
+
+```
+
+```{spss}
+
+```
+
+```{spss}
+
+```
+
+```{spss}
+
+```

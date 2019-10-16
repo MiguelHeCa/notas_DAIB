@@ -1,0 +1,388 @@
+---
+title: "ClaseANOVA"
+author: "José Miguel Hernández Cabrera"
+date: "10/14/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## ANOVA
+
+Efectos fijos. Queremos que se mantengan
+
+
+Efectos aleatorios. Muestra aleatoria del nivel del efector
+
+Variabilidad bruta
+$$Q=\sum^{r}_{i=1}\sum^{n_i}_{j=1}(x_{ij}-\bar{x})$$
+
+Objetivo era medias. Varianza era medias. Varianzas atribuibles al tratamiento.
+
+Estadístico de contraste
+
+El cociente entre la variabilidad "entre" la variabilidad "dentro" una vez que se han hecho comparables, sigue una distribución F de Snedecor con $r-1$ y $N-r$ grados de libertad.
+
+La variabilidad de entre los grupos es mayor que el azar, por lo que hay algo que las hace diferente al azar. Yo no quiero rechazar si la r supera el azar.
+
+LSD: Diferencia significativa mínima. 
+
+Grupo control comparar contra grupo control: usar DUNNET
+
+Si comparar troas las comparaciones. Si grupos eran tamaós iguales: Tukey. Si son distintos: Bonferroni
+
+```spss 
+EXAMINE VARIABLES=Actividad BY Tratamiento
+  /PLOT BOXPLOT NPPLOT
+  /COMPARE GROUPS
+  /STATISTICS DESCRIPTIVES
+  /CINTERVAL 95
+  /MISSING LISTWISE
+  /NOTOTAL.
+
+```
+
+Suponemos normalidad en todos ellos. porque el Shapiro-Wilk lo ponemos.
+
+Hay que ver con ANOVA si son homocedásticas
+
+```spss 
+ONEWAY Actividad BY Tratamiento
+  /STATISTICS DESCRIPTIVES HOMOGENEITY
+  /PLOT MEANS
+  /MISSING ANALYSIS.
+
+```
+Acepto hipótesis nula de igualdad de varianzas
+
+Veo interactividad. Las medias son diferentes porque la Media cuadrática entre grupos es más grande que la dentro de grupos. Estoy rechazando la hipótesis nula de que son iguales las medias. Entonces no todos los tratamientos son iguales. Hay que buscar el mecanismo
+
+Criterio del p-valor, El error que puedo cometer si rechazo la hipótesis nula. La probabilidad que tengo al equivocarme al rechazar. si es 0.000007, rechaza hipótesis nula. Si es .20, acepta hipótesis nula porque es muy probable que te equivoques al aceptarla.
+
+Encontrar la forma. Todos los grupos tienen el mismo tamaño muestral. El test Tukey es el más adecuado para hacerlo. 
+
+Dunnett (para contrastar controles)
+
+```spss
+ONEWAY Actividad BY Tratamiento
+  /STATISTICS DESCRIPTIVES HOMOGENEITY
+  /PLOT MEANS
+  /MISSING ANALYSIS
+  /POSTHOC=TUKEY ALPHA(0.05).
+
+```
+
+Cuando sale significación pequeña. 
+La 1 con la 2 hay diferencia, la 5 también. 
+
+Contrastes. Que no sean dos a dos.
+
+
+Con tal que la suma de constantes sea cero, los contrastes pueden ser cualquier orden
+`c(2, 0, -1, -1)` puedo especificar contrastar el primero contra los dos últimos.
+
+```spss
+ONEWAY Actividad BY Tratamiento
+  /CONTRAST=2 0 0 -1 -1
+  /STATISTICS DESCRIPTIVES HOMOGENEITY
+  /PLOT MEANS
+  /MISSING ANALYSIS
+  /POSTHOC=TUKEY ALPHA(0.05).
+
+```
+
+## Variable de 2 vías
+
+3 variables.
+
+Primero saber si son homocedásticos.
+
+```spss
+UNIANOVA abundacia BY tiposuelo Abono
+  /METHOD=SSTYPE(3)
+  /INTERCEPT=INCLUDE
+  /PRINT HOMOGENEITY
+  /CRITERIA=ALPHA(.05)
+  /DESIGN=tiposuelo Abono tiposuelo*Abono.
+```
+
+p-value, acepto H0 de que las varianzas son homogéneas.
+
+PRuebas de efectos.Algunas de los factores aportan a la explicatividade del modelo.
+La respuesta depende deAlguno de los factores.
+
+¿Existe efecto tipo abono? La significación de interacción con tiposuelo y abono es muy pequeña, lo cual rechazamos Hipótesis nula de que no hay interacción.
+
+Detecto la existencia de la interacción. Es grave, no deja interpretar el tipo de efectos.
+No es interpretativo ninguno de los factores individuales cuando la interacción es significativa. Enmascara los resultados. Hay que analizar los resultados de un nivel de un factor respecto al otro.
+
+Lo mejor que se puede hacer hacer un gráfico de interacción.
+
+```spss
+UNIANOVA abundacia BY tiposuelo Abono
+  /METHOD=SSTYPE(3)
+  /INTERCEPT=INCLUDE
+  /PLOT=PROFILE(tiposuelo*Abono Abono*tiposuelo) TYPE=LINE ERRORBAR=NO MEANREFERENCE=NO YAXIS=AUTO
+  /PRINT HOMOGENEITY
+  /CRITERIA=ALPHA(.05)
+  /DESIGN=tiposuelo Abono tiposuelo*Abono.
+```
+
+En ácido no hay diferencias, pero en alcalino sí porque hay un cruce de líneas.
+Lo que es bueno para uno es malo para otro. Lo que tengo que hacer es quedarme solo con ácido y ver si hay diferencias entre niveles. Igual con alcalino, para ver si hay cambios entre niveles propios.
+
+Agrego la línea `compare(Abono) ADJ(BONFERRONI)` a la línea donde está `/EMMEANS=TABLES(tiposuelo*Abono) `
+
+```spss 
+UNIANOVA abundacia BY tiposuelo Abono
+  /METHOD=SSTYPE(3)
+  /INTERCEPT=INCLUDE
+  /PLOT=PROFILE(tiposuelo*Abono Abono*tiposuelo) TYPE=LINE ERRORBAR=NO MEANREFERENCE=NO YAXIS=AUTO
+  /EMMEANS=TABLES(tiposuelo*Abono) compare(Abono) ADJ(BONFERRONI)
+  /PRINT HOMOGENEITY
+  /CRITERIA=ALPHA(.05)
+  /DESIGN=tiposuelo Abono tiposuelo*Abono.
+```
+Se logra comparar todos los niveles entre factores.
+
+AHora analizar efectos principales de los factores quitando la interacción
+
+```spss
+UNIANOVA abundacia BY tiposuelo Abono
+  /METHOD=SSTYPE(3)
+  /INTERCEPT=INCLUDE
+  /CRITERIA=ALPHA(0.05)
+  /DESIGN=tiposuelo Abono.
+
+```
+
+## Análisis de la varianza con R
+
+```{r}
+# librerías que hay que cargar para hacer el análisis de la varianza.
+library(nortest)
+library(car)
+library(RcmdrMisc)
+library(DescTools)
+library(PMCMRplus)
+library(phia)
+
+#Si queremos representar un boxplot de la variable por las categorias del factor.
+#nombrearchivo$nombrevariable=datos1$Actividad
+#nombrearchivo$nombredelfactor=datos1$Tratamiento
+
+datos1 = haven::read_sav("data/datos1.sav")
+
+# Numérica
+datos1$Actividad
+
+# Factor
+datos1$Tratamiento
+
+# Hacen lo mismo
+with(datos1, boxplot(Actividad ~ Tratamiento))
+boxplot(datos1$Actividad ~ datos1$Tratamiento)
+
+# La otra manera tendr�a que indicarse previamente que esa variable es un factor y se le puede poner las etiquetas correspondientes.
+
+# nombrearchivo$nombrefactor<-factor(nombrearchivo$nombrefactor, labels=c("categoria1","categoria2","categoria3").....)
+
+## datos1$Tratamiento=factor(datos1$Tratamiento, labels=c("T1","T2","T3","T4","T5"))
+
+datos1$Tratamiento = factor(datos1$Tratamiento, labels = c("T1","T2","T3","T4","T5"))
+boxplot(datos1$Actividad ~ datos1$Tratamiento)
+```
+
+### Contraste de normalidad
+Si queremos representar los intervalos de confianza para cada grupo y explorar tendencias. Hay varios argumentos que hay que cambiar en funci�n de lo que se quiere ver en el grafico. Incluso se puede cambiar el nivel de significaci�n a�adiendo el argumento `level = `
+
+```{r}
+#Si queremos representar los intervalos de confianza para cada grupo y explorar tendencias. Hay varios argumentos que hay que cambiar en funci�n de lo que se quiere ver en el grafico. Incluso se puede cambiar el nivel
+#de significaci�n a�adiendo el argumento level=
+plotMeans(
+  datos1$Actividad,
+  datos1$Tratamiento,
+  error.bars = "conf.int",
+  xlab = "Tratamiento",
+  main = "eltitulo",
+  ylab = "Actividad"
+)
+
+
+```
+
+Explorar los supuestos del análisis de las variables. Shapiro Will. Kolmogorov. Cambiar el nombre
+
+```{r}
+tapply(datos1$Actividad, datos1$Tratamiento, shapiro.test)
+```
+Combinar gráficos con el test. ANOVA suele ser estándar contra desviaciones de normalidad. La homocedasticidad es más importante. Todos los valores son mayores a .05, por lo que no hay argumentos para decir que no son normales.
+
+### Contraste de homocedasticidad
+Por defecto viene la mediana. Si queremos hacerlo con la media se debe añadir `center=mean`
+```{r}
+leveneTest(y = datos1$Actividad, group = datos1$Tratamiento)
+```
+La hipótesis nula es que las varianzas de poblaciones son iguales. No hay razones para rechazar la hipótesis nula.
+
+```{r}
+anova1 = aov(datos1$Actividad ~ datos1$Tratamiento)
+summary(anova1)
+TukeyHSD(anova1)
+plot(TukeyHSD(anova1))
+
+```
+
+Los invervalos de confianza, todos los que no toquen con el cero tienen diferencias.
+
+si queremos hacer OTRO TIPO DE TEST POSTHOC ya que la funci�n de anova s�lo da el tukey, entonces podemos dar este argumento que nos permite utilizar 8 tipo de correcciones. Para el LSD solo hay que poner `none`
+Si no ponemos argumentos y sólo ponemos las variables, por defecto el ajuste es el Holm-Bonferroni, para varianzas iguales y contraste bilateral.
+
+```{r}
+pairwise.t.test(
+  x = datos1$Actividad,
+  g = datos1$Tratamiento,
+  p.adjust.method = "bonferroni",
+  pool.sd = TRUE,
+  paired = FALSE,
+  alternative = "two.sided"
+)
+```
+`pool.sd` significa que la varianza es común, es decir, el supuesto de homocedasticidad.
+
+Si quiero hacer el TEST DUNNET entonces tendr� que poner otro argumento.Por defecto es la primera, si queremos cambiar el grupo a�adimos el argumento control="1" o el que sea
+
+
+```{r}
+DescTools::DunnettTest(x = datos1$Actividad, g = datos1$Tratamiento)
+```
+
+### Contraste no paramétrico
+
+```{r}
+Kruskal = kruskal.test(datos1$Actividad ~ datos1$Tratamiento)
+Kruskal
+```
+
+Para hacer los contrastes tras el Kruskal se puede hacer de varias maneras. Haciendo la U de mann-whitney con correci�n. O haciendo test especificos para hacer tras el kruskcal como el test de Dunn.
+
+#### Primer caso
+
+```{r}
+pairwise.wilcox.test(
+  x = datos1$Actividad,
+  g = datos1$Tratamiento,
+  paired = FALSE,
+  p.adjust.method = "bonferroni"
+)
+```
+
+No es un contraste específico. Elimina el rango del grupo que no hemos metido. El test de Dunn para apañar bien.
+
+#### Segundo caso
+
+```{r}
+posthoc.kruskal.dunn.test(datos1$Actividad,
+                          datos1$Tratamiento,
+                          p.adjust.method = "bonferroni")
+
+```
+
+### ANOVA DE DOS FACTORES CON INTERACCIÓN
+
+La interacci�n se pone el producto entre factores y si no es con interacci�n se pone la suma. Esta funci�n utiliza la suma de cuadrados tipo I.
+
+#Primero convertimos las variables n�mericas en factores;
+
+```{r}
+datos2 = haven::read_sav("data/datos2.sav")
+
+datos2$tiposuelo = factor(datos2$tiposuelo, labels = c("Ácido", "Alcalino"))
+datos2$Abono = factor(datos2$Abono, labels = c("A", "B", "C"))
+
+```
+
+Realizamos la ANOVA
+
+```{r}
+anova2  = aov(datos2$abundacia ~ datos2$tiposuelo * datos2$Abono)
+summary(anova2)
+```
+Función `aov()` hace suma de cuadrados nada más. Si tenemos datos balanceados, hacer sumas de cuadrados tipo 3.
+
+Existe interacción significativa.
+
+Si se quiere hacer la suma de cuadrados tipo III, que es la que realizan la mayor�a de los programas por defecto, entonces se debe hacer con esta funci�n.
+
+```{r}
+anova3 <-
+  lm(
+    datos2$abundacia ~ datos2$tiposuelo * datos2$Abono
+  )
+Anova(anova3, type = "III")
+```
+
+Si se quiere analizar la interacci�n se debe tambien utilizar la el argumenteo lm. Si no pone nada de type, por defecto hace la suma de cuadrados II. Si son balanceados coinciden.
+
+```{r}
+anova3 <-
+  lm(
+    datos2$abundacia ~ datos2$tiposuelo * datos2$Abono
+  )
+Anova(anova3)
+```
+
+```{r}
+#Gr�fico de interacci�n de un factor por el otro, se debe realizar de la siguente manera.
+
+interaction.plot(
+  datos2$tiposuelo,
+  datos2$Abono,
+  datos2$abundancia
+)
+
+# Puedes a�adir mas argumentos.
+
+interaction.plot(
+  datos2$tiposuelo,
+  datos2$Abono,
+  datos2$abundancia,
+  ylim = c(  ,  ),
+  col = c("red", "blue", "green"),
+  ylab = "nombre de la variable",
+  xlab = "nombredeX",
+  trace.label = "nombredeY"
+)
+
+#Si queremos el otro gr�fico de interacci�n s�lo hay que intercambiar el orden de factores.
+
+interaction.plot(
+  datos2$Abono,
+  datos2$tiposuelo,
+  datos2$abundancia
+)
+
+#Si quieres el grafico conjunto de la interacci�n.
+
+meansanova3 <- interactionMeans(anova3)
+meansanova3
+plot(meansanova3)
+
+
+#Para deshacer la interaccion se pueden hacer la comparaci�n de las categorias de un factor para cada nivel del otro factor, considerando la suma de cuadrados del residual del anova de 2 vias con interacci�n.
+
+testInteractions(anova3, fixed = "datos2$tiposuelo", across =
+                   "datos2$Abono")
+
+# o bien,
+
+testInteractions(anova3, fixed = "datos2$Abono", across =
+                   "datos2$tiposuelo")
+
+# Aunque el test conjunto e interesante de interacci�n es:
+
+testInteractions(anova3)
+```
+
