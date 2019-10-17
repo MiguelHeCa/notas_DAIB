@@ -1,0 +1,140 @@
+---
+title: "Regresión Logística"
+author: "José Miguel Hernández Cabrera"
+date: "10/16/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+install.packages("rms")
+
+library(data.table)
+library(ggplot2)
+library(rms)
+```
+
+## Regresión logística
+
+Ponemos datos de votaciones de senadores de EUA relacionados con la industria automovilística.
+
+```{r Carga_de_votos}
+Votos = foreign::read.spss("data/Votos.sav", to.data.frame = TRUE)
+
+Votos = as.data.table(Votos)
+```
+
+Crear unas cifras con escala logarítmica base 10.
+
+```{r cifras}
+Votos[, Cifras := log10(10 * Contribution + 1)]
+
+
+```
+
+#### Explorar datos
+
+```{r}
+ggplot(Votos, aes(x = Voto, y = Contribution)) +
+  geom_boxplot()
+
+plot(Contribution ~ Voto, data = Votos)
+
+plot(Cifras ~ Voto, data = Votos)
+
+plot(Contribution ~ Partido, data = Votos)
+
+plot(Cifras ~ Partido, data = Votos)
+```
+
+#### Ver tabla de frecuencias
+
+```{r tablas}
+tv = table(Votos$Voto)
+```
+
+#### Probabilidad de modelos
+
+```{r}
+gfit1 = glm(Voto ~ Cifras, data = Votos, family = binomial)
+summary(gfit1)
+```
+
+Cuanto más grande es la pendiente, más la capacidad de contestar positiva o negativamente. $\beta_0$ no significa nada.
+
+el Número de cifras que predice la probabilidad de que vote negativo.
+```{r}
+Beta_0 = 6.496/1.468
+```
+
+Es significativamente de cero. Es el contraste de Wald. El de la pendiente $\beta_1$ dice que el senador puede votar distinto de cero.
+
+
+el 69% de los senadores que recibieran una contribución de 5 cifras, votarían a favor.
+
+Los odds ratio `2.325651`. Esto se traduce en 2.33 veces más probable que el voto sea más positivo que negativo. 
+En general un senador que recibe una contribución de 5 cifras, 
+
+Comparamos análisis de la varianza. Para saber si un modelo es bueno, lo comparamos con otros. Comparamos al modelo constante $\beta_0$ vs modelo con todas las variables. Calculamos la suma de las diferencias. 
+
+```{r}
+anova(gfit1, test = "Chisq")
+```
+
+
+```{r}
+coefficients(gfit1)
+exp(coefficients(gfit1)[2])
+```
+
+
+Ajustar curva logística a los datos para 
+
+Ajustar modelo con una variable
+```{r}
+gfit0 = glm(Voto ~ 1, data = Votos, family = "binomial")
+
+summary(gfit0)
+```
+
+Función `predict()` sirve para dos cosas. La predicción de los valores para cada uno de los casos.
+
+```{r}
+
+pi = predict(gfit1, type = "response")
+pred = as.numeric(pi > 0.5)
+conf = table(Votos$Voto, pred)
+conf
+
+```
+
+Machine Learning usa `predict`
+
+Coeficiente es positivo. LA probabilidad de votar republicano es más grande que demócrata.
+
+Hacer una regresión logística con una única variable nominal, es lo mismo que la chi^2, se mide la asociación.
+
+Comparo con el modelo nulo.
+
+Matriz de confusión. Cruzar varias variables. Cifras más el partido. 
+
+```{r}
+
+```
+
+Las tres variables están muy relacionadas entre ellas. No tenemos diagnósticos de multicolinealidad, pero la idea es similar. El análisis de la varianza es similar.
+
+Se analizan las varianzas con su interacción.
+
+```{r}
+anova(gfit3, gfit4, test = "Chisq")
+```
+
+Interacción no es significativa.
+
+La pendiente es más grande en republicanos, por lo que es más fácil corromper a un republicano.
+
+La tabla de confusión. HAce una predicción del 60% correctamente.
+
+El modelo sin interacción es el que funcionaría mejor.

@@ -393,49 +393,49 @@ ow_ob[, .(percent = sum(percent, na.rm = T)), by = .(age, geo, time)]
 overweight = BMI[bmi == "Overweight" & !is.na(change)][, bmi := droplevels(bmi)]
 overweight_18_44 = overweight[age %in% c("From 18 to 24 years", "From 25 to 34 years", "From 35 to 44 years")][, age := droplevels(age)]
 overweight_35_75 = overweight[age %in% c("From 45 to 54 years", "From 55 to 64 years", "From 65 to 74 years")][, age := droplevels(age)]
-
-overweight_18_44
-
-ggplot(overweight_18_44, aes(x = geo, y = `2008`)) +
-  geom_point() +
-  geom_point(aes(y = `2014`)) + 
-  theme_light()
+# 
+# overweight_18_44
+# 
+# ggplot(overweight_18_44, aes(x = geo, y = `2008`)) +
+#   geom_point() +
+#   geom_point(aes(y = `2014`)) + 
+#   theme_light()
 
 overweight_18_44 = melt(overweight_18_44, id = 1:3, measure = 4:5, variable.name = "time", value.name = "percent", variable.factor = TRUE)
+# 
+# ggplot(overweight_18_44, aes(x = time, y = percent, group = geo)) +
+#   geom_line() +
+#   facet_grid(rows = vars(geo), cols = vars(age))
 
-ggplot(overweight_18_44, aes(x = time, y = percent, group = geo)) +
-  geom_line() +
-  facet_grid(rows = vars(geo), cols = vars(age))
 
 
-
-ggplot(overweight) +
-  geom_segment(aes(
-    x = `2008`,
-    xend = `2014`,
-    y = fct_reorder2(geo, age, -`2008`),
-    yend = fct_reorder2(geo, age, -`2008`)
-  ),
-  #size = 1,
-  color = "#CCCCCC") +
-  geom_point(aes(x = `2008`, y = geo, color = "2008"), size = 2) +
-  geom_point(aes(x = `2014`, y = geo, color = "2014"), size = 2) +
-  scale_color_manual(values = c("gold", "blue")) +
-  guides(color = guide_legend(title = "Año")) +
-  facet_grid(cols = vars(age)) +
-  theme_light() +
-  theme(
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    legend.position = "bottom",
-    legend.direction = "horizontal"
-  ) +
-  labs(
-    x = "Porcentaje de la población con sobrepeso",
-    y = "Países de la Unión Europea",
-    title = "Porcentaje de la población con sobrepeso de países de la Unión Europea de 2008 a 2014.",
-    caption = "Datos de la Oficina Europea de Estadística."
-  )
+# ggplot(overweight) +
+#   geom_segment(aes(
+#     x = `2008`,
+#     xend = `2014`,
+#     y = fct_reorder2(geo, age, -`2008`),
+#     yend = fct_reorder2(geo, age, -`2008`)
+#   ),
+#   #size = 1,
+#   color = "#CCCCCC") +
+#   geom_point(aes(x = `2008`, y = geo, color = "2008"), size = 2) +
+#   geom_point(aes(x = `2014`, y = geo, color = "2014"), size = 2) +
+#   scale_color_manual(values = c("gold", "blue")) +
+#   guides(color = guide_legend(title = "Año")) +
+#   facet_grid(cols = vars(age)) +
+#   theme_light() +
+#   theme(
+#     panel.grid.major.y = element_blank(),
+#     panel.grid.minor.y = element_blank(),
+#     legend.position = "bottom",
+#     legend.direction = "horizontal"
+#   ) +
+#   labs(
+#     x = "Porcentaje de la población con sobrepeso y ",
+#     y = "Países de la Unión Europea",
+#     title = "Porcentaje de la población con sobrepeso de países de la Unión Europea de 2008 a 2014.",
+#     caption = "Datos de la Oficina Europea de Estadística."
+#   )
 
 
 DTow1 = DTbmi1[bmi %in% c("Obese", "Overweight")]
@@ -475,6 +475,8 @@ overweight = overweight[order(age, `2008`)]
 overweight[, direction := if_else(change > 0, "Aumentó", "Disminuyó")]
 overweight
 
+fwrite(overweight, "data/overweight.csv")
+
 
 ggplot(overweight) +
   geom_segment(aes(
@@ -491,11 +493,11 @@ ggplot(overweight) +
   scale_color_manual(values = c("#b2b2b2", "#323232", "#d8003d", "#00f2ad")) +
   guides(color = guide_legend(title = "Año")) +
   facet_wrap(vars(geo), ncol = 3) +
-  theme_light(base_size = 18) +
+  theme_light(base_size = 10) +
   labs(
     x = "Porcentaje de la población con sobrepeso y obesidad",
     y = "Rangos de edad",
-    title = "Porcentaje de la población con sobrepeso de países de la Unión Europea de 2008 a 2014.",
+    title = "Porcentaje de la población con sobrepeso y obesidad de países de la Unión Europea de 2008 a 2014.",
     caption = "Fuente: Datos de la Oficina Europea de Estadística."
   ) +
   theme(
@@ -503,15 +505,91 @@ ggplot(overweight) +
     panel.grid.minor.y = element_blank(),
     legend.position = "bottom",
     legend.direction = "horizontal",
-    axis.title = element_text(size = 20),
-    plot.title = element_text(size = 22),
-    plot.caption = element_text(size = 20),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 11),
+    plot.caption = element_text(size = 12),
     strip.background = element_rect(fill = "White"),
-    strip.text = element_text(colour = "black", size = 20)
+    strip.text = element_text(colour = "black", size = 12)
   )
 
 overweight[, .(median(`2008`, na.rm = T), median(`2014`, na.rm = T)), by = age]
 
+# Grafica obesidad --------------------------------------------------------
+
+ggplot(overweight) +
+  geom_segment(aes(
+    x = `2008`,
+    xend = `2014`,
+    y = age,
+    yend = age,
+    colour = direction
+  ),
+  size = 1.5
+  ) +
+  geom_point(aes(x = `2008`, y = age, color = "2008"), size = 1, shape = "|") +
+  geom_point(aes(x = `2014`, y = age, color = "2014"), size = 1, shape = "|") +
+  scale_color_manual(values = c("#b2b2b2", "#323232", "#d8003d", "#00f2ad")) +
+  guides(color = guide_legend(title = "Año")) +
+  facet_wrap(vars(geo), ncol = 2) +
+  theme_light(base_size = 10) +
+  labs(
+    x = "Porcentaje de la población con sobrepeso y obesidad",
+    y = "Rangos de edad",
+    title = "Porcentaje de la población con sobrepeso y obesidad de países de la Unión Europea de 2008 a 2014.",
+    caption = "Fuente: Datos de la Oficina Europea de Estadística."
+  ) +
+  theme(
+    axis.title.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 11),
+    plot.title.position = "plot",
+    plot.caption = element_text(size = 12),
+    strip.background = element_rect(fill = "White"),
+    strip.text = element_text(colour = "black", size = 12)
+  )
+
+ggsave("")
+
+ggplot(overweight) +
+  geom_segment(aes(
+    x = `2008`,
+    xend = `2014`,
+    y = age,
+    yend = age,
+    colour = direction
+  ),
+  size = 3
+  ) +
+  geom_point(aes(x = `2008`, y = age, color = "2008"), size = 1, shape = "|") +
+  geom_point(aes(x = `2014`, y = age, color = "2014"), size = 1, shape = "|") +
+  scale_color_manual(values = c("#b2b2b2", "#323232", "#d8003d", "#00f2ad")) +
+  guides(color = guide_legend(title = "Año")) +
+  facet_wrap(vars(geo), ncol = 6) +
+  theme_light(base_size = 13) +
+  labs(
+    x = "Porcentaje de la población con sobrepeso y obesidad",
+    y = "Rangos de edad",
+    title = "Porcentaje de la población con sobrepeso y obesidad de países de la Unión Europea de 2008 a 2014.",
+    caption = "Fuente: Datos de la Oficina Europea de Estadística."
+  ) +
+  theme(
+    axis.title.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    axis.title = element_text(size = 13),
+    plot.title = element_text(size = 16),
+    plot.title.position = "plot",
+    plot.caption = element_text(size = 13),
+    strip.background = element_rect(fill = "White"),
+    strip.text = element_text(colour = "black", size = 13)
+  ) +
+  coord_cartesian(xlim = c(10, 80))
 
 # Percepción de salud -----------------------------------------------------
 
