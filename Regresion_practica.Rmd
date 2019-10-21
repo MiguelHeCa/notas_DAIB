@@ -1,0 +1,414 @@
+---
+title: "Cigarros y regresión"
+author: "José Miguel Hernández Cabrera"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    theme: readable
+    highlight: pygments
+bibliography: referencias/referencias.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tippy)
+```
+
+## Introducción
+
+```{r tooltips, echo=FALSE}
+FCT = tippy("Comisión Federal de Comercio de Estados Unidos de América", tooltip = "Federal Trade Comission")
+obs = tippy("observaciones", tooltip = "filas")
+var = tippy("variables", tooltip = "columnas")
+dum = tippy("indicadora", tooltip = "dummy, booleana o dicotómica")
+```
+
+*Nota: algunos conceptos muestran sus definiciones al posicionar el cursor sobre el texto. Tienes que leer activamente para poder descubrirlas.*
+
+La `r FCT` cada año analiza las distintas marcas de tabaco de acuerdo a su contenido en alquitrán, nicotina y monóxido de carbono. *The United States Surgeon General* considera cada una de estas sustancias peligrosas para la salud de los fumadores. Estudios pasados ponen de manifiesto que incrementos en el contenido de alquitrán y nicotina de los cigarros vienen acompañados por incrementos en el monóxido de carbono emitido al fumar un cigarro [@lauren1994]. Los datos que se presentan [aquí](https://mste.illinois.edu/malcz/DATA/SOCIALSCIENCE/Cigarettes.html) fueron tomados de @mendenhallsincich.
+
+Antes de continuar, me aseguré de tener los datos en una carpeta llamada `data` contenida dentro de mi carpeta `.Rproj` para tener un directorio ordenado. Recomiendo usar [RStudio Projects](https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects) para evitar tener que utilizar `setwd()`en cada ocasión y no tener que preocuparse por establecer un entorno de trabajo cada vez que uno inicie sesión.
+
+Primero, cargamos la biblioteca `readxl` para importar a R el archivo que se llamará `ciga`:
+
+```{r metodo_excel}
+library(readxl)
+
+ciga = read_excel(path = "data/ciga.xls")
+```
+
+Una vez importados, hay que ver la e**str**uctura con la función `str()`.
+
+```{r}
+str(ciga)
+```
+
+De entre varias cosas, podemos ver que los datos se componen de `r nrow(ciga)` `r obs` y `r ncol(ciga)` `r var`. De las variables, solo `Marca` es una variable nominal, todas las demás son cuantitativas.
+
+Una forma más estadística de ver los datos es con la función `summary()`, la cual mostrará estadísticos descriptivos básicos. Esta función también será muy útil más adelante para ver los resultados de los modelos estadísticos que utilizaremos más adelante. Por ahora veamos cómo se comportan las variables de los cigarrillos.
+
+```{r}
+summary(ciga)
+```
+
+Aquí hay algo raro. En la función `str()` vimos que la variable `Light` se está integrada de `0` y `1`. Al usar `summary()`, naturalmente la máquina nos da sus descriptivos, pero resulta que esta variable es una `r dum` que servirá para identificar si el cigarrillo es Light o no. Entonces no tiene sentido que Light tenga medidas de tendencia central. Como queremos que R detecte que es una variable especial, existen dos formas de hacerlo: convirtiendo la variable en [`logical`](https://es.r4ds.hadley.nz/transform.html) o en [`factor`](https://es.r4ds.hadley.nz/factores.html). 
+
+Para este ejercicio, convertiré la variable hacia la clase `factor`. Existen tres principales formas de hacerlo: con R `base`, con el amigable paquete `dplyr` de [`tidyverse`](https://www.tidyverse.org) y con el rapidísimo [`data.table`](https://github.com/Rdatatable/data.table). Cada uno tiene sus ventajas y desventajas. Mi favorito es `data.table`, pero por mucho tiempo utilicé `tidyverse` para hacerme la vida más fácil en R. Sin embargo, usaré como ejemplo solamente `base` porque no necesitamos instalar nada más.
+
+Con base R, la forma de seleccionar las columnas es mediante la sintaxis `data.frame$columna` donde `$` es una forma de seleccionar la variable que nos interesa.
+
+Actualmente la variable es de clase `numeric`. Esto lo comprobamos con la función `class()`:
+
+```{r clase_cigaLight}
+class(ciga$Light)
+```
+
+Para convertirla a `factor` utilizamos la función, adivina..., `factor()`:
+
+```{r seleccionar_var}
+ciga$Light = factor(ciga$Light, levels = c(0, 1), labels = c("No", "Sí"))
+```
+
+Las funciones son instrucciones que se les da a la computadora (mediante R) para que ella las ejecute. Como podrás ver en los códigos anteriores, todas las funciones utilizan paréntesis `()` después de una palabra. Cada función se compone de *argumentos*, los cuales son parámetros o instrucciones específicas con las que la computadora trabajará. En el caso de nuestra variable `r dum`, escribimos `levels` para determinar los *niveles* con los que el factor categorizará el `0` y el `1` (es una característica propia de R). El argumento `labels` se usa para etiquetar el `0` en `No` y el `1` en `Sí`. Aunque pudimos escribir simplemente `ciga$Light = factor(ciga$Light)`, la computadora habría tenido que adivinar cuáles son las categorías, sin que pusiera las etiquetas. Por eso siempre es mejor dar las instrucciones explícitamente.
+
+Ahora veamos cómo reporta R a nuestra variable transformada:
+
+```{r summary_ciga}
+summary(ciga)
+```
+
+Podemos ver que ahora tenemos una tabla de frecuencias en lugar de medidas de tendencia central. También podemos comprobarlo vía la función `class()`.
+
+```{r clase_cigaLight_fct}
+class(ciga$Light)
+```
+
+## Regresión simple
+
+Al principio de cualquier análisis, siempre comenzamos por hacer cada una de las regresiones simples de las variables por separado: Alquitrán `Alq`, Nicotina `Nic` y Peso `Pes`. Como la variable `Light` es nominal de momento no la incluiremos. El modelo es de la forma:
+
+$$Y=\beta_0+\beta_1X_1$$
+
+### Regresión para el alquitrán
+
+Queremos saber qué tanto está relacionado el alquitrán sobre el `r tippy("CO.", "Monóxido de carbono")` Para ello usaremos el modelo $CO = \beta_0 + \beta_1Alq$, lo estimamos con la función `lm()` y lo interpretamos con `summary()`.
+
+La función `lm()` corresponde a *linear model* y tiene dos argumentos: `formula`, cuya sintaxis es `variable_de_respuesta ~ variable_explicativa`, y `data`, en donde va la `data.frame` que corresponda. 
+
+Hay dos formas de escribir los argumentos: explícita o implícitamente. La forma explícita consiste en escribir el nombre del argumento y luego el contenido. La implícita es solamente poner el contenido del argumento dentro del orden en que aparece en la función. Para saber el orden, escribe `?` seguido del nombre de la función sin los paréntesis y aparecerá la hoja de ayuda. Intenta hacerlo con `?lm`. Para ilustrar esto, veamos cómo invocar argumentos de `lm()` en dos formas:
+
+```{r exp_imp, eval=FALSE}
+# Forma explícita
+lm(formula = CO ~ Alq, data = ciga)
+
+# Forma implícita
+lm(CO ~ Alq, ciga)
+```
+
+¿Siempre debemos escribir explícitamente las instrucciones? No necesariamente. En realidad depende mucho del público al que va dirigido y qué tan legible conviene ser. No siempre vale la pena explicar todo.
+
+Por último, al modelo le llamaremos `modelo_a`, aunque podría ser `alq_lm`, o el nombre que sea. De hecho, nombrar los objetos [apropiadamente](https://es.r4ds.hadley.nz/flujo-de-trabajo-conocimientos-b%C3%A1sicos.html#) es una de las buenas prácticas para trabajar con datos. por lo pronto, el modelo queda de la siguiente forma:
+
+```{r lm_alq}
+modelo_a = lm(CO ~ Alq, ciga)
+
+summary(modelo_a)
+```
+
+Diseccionemos el montón de cosas que aparecen aquí. En la primera fila se encuentra `(Intercept)`, el cual corresponde a $\beta_0$ o la `r tippy("ordenada al origen;", "Lo que vale la variable respuesta Y cuando la variable X vale cero.")` por sí no se puede interpretar. Luego, `Alq` es $\beta_1Alq$, el cual indica  el `r tippy("coeficiente de regresión", "Cambio medio esperado en la variable respuesta Y por incremento unitario en la variable X")` de la ecuación. En las columnas están `Estimate` que son los valores estimados, `Std. Error` que es el error estándar, `t value` el valor estadístico de t y `Pr(>|t|)` el `r tippy("p-valor.", "p-value o valor-p")`
+
+Así, la ecuación de regresión es $CO = `r modelo_a[["coefficients"]][[1]]` + `r modelo_a[["coefficients"]][[2]]` * Alq$. El `r tippy("coeficiente de determinación", "Poder explicativo del modelo o Grado de Dependencia")` es $R^2 = `r summary(modelo_a)[["r.squared"]]`$, por lo que el poder explicativo es alto debido a que el $91.68\%$ de la variabilidad del `r tippy("CO", "Monóxido de carbono")` está explicado por el modelo de regresión. 
+
+Como las cosas se ven mejor visualmente, podemos dibujar un diagrama de dispersión con su recta ajustada. Para ello usaré el paquete [`ggplot2`](https://ggplot2.tidyverse.org/). Esta es la biblioteca más utilizada de R para hacer gráficos. `gg` corresponde a gramática de gráficos, la cual tiene unos fundamentos teóricos sobre visualización de datos [bastante interesante](https://es.r4ds.hadley.nz/visualizaci%C3%B3n-de-datos.html). Asegúrate de tener instalado `ggplot2` o `tidyverse` antes de cargarlo.
+
+```{r}
+library(ggplot2)
+```
+
+La sintaxis de ggplot es laboriosa pero fácil de captar: primero usamos la función `ggplot()` para crear el cuadro de dibujo. Dentro de esta función `r tippy("siempre", "siempre. SIEMPRE.")` irá primero `data` y luego una subfunción llamada `aes()`. Esta subfunción corresponde a **aes**`r tippy("thetics", "Estética en inglés")` y determinan los ejes `x` y `y`, los colores `color`, el tamaño `size` y muchos otros argumentos. 
+
+Seguido de la función `ggplot()` se usan capas que se establecerán mediante el símbolo `+`. Luego, le siguen las diferentes [opciones de dibujo](https://ggplot2.tidyverse.org/reference/index.html), las cuales pueden ser tan simples o tan complejas como se requieran.
+
+En la primera capa usaremos `geom_point()` para dibujar los puntos sobre la gráfica, sin argumentos. Esto es así porque `+` nos permite `r tippy("heredar", "Pasar los argumentos de una función a otra implícitamente")` `data` y `aes()` a las funciones siguientes.
+
+Finalmente, para crear la línea de ajuste en la siguiente capa usamos `geom_abline()`, la cual tiene dos argumentos: `intercept` y `slope`. ¿Te suenan?. La forma fácil de escribirlos es simplemente copiar y pegar de la consola los valores que correspondan. La forma precisa (y recomendada) es seleccionar los objetos mediante la sintaxis `objeto$variable[índice_fila, índice_columna]`, de tal manera que para seleccionar el punto de intercepción escribimos `modelo_a$coefficients[1]` y la pendiente `modelo_a$coefficients[2]`. Guardarmos la gráfica en el objeto `graf_a` y luego la imprimimos escribiendo el objeto en la siguiente línea.
+
+```{r}
+graf_a = ggplot(data = ciga, aes(x = Alq, y = CO)) +
+  # Dibuja los puntos
+  geom_point() +
+  # Dibuja la recta ajustada. Usamos el objeto "modelo_a" para precisión
+  geom_abline(intercept = modelo_a$coefficients[1],
+              slope = modelo_a$coefficients[2])
+
+graf_a
+```
+
+La recta parece ajustarse bien a los datos. Solamente el punto de la derecha parece estar fuera del patrón de los demás. Podría ser que se trate de un *`r tippy("outlier.", " también llamado atípico o valor aberrante")`* Por el momento, consultando el $p-valor$ mediante `summary(modelo_a)[["coefficients"]][2,4]`, podemos ver que el modelo explica una parte significativa de la variabilidad de la respuesta y el coeficiente de regresión es significativamente distinto de cero $p = `r summary(modelo_a)[["coefficients"]][2,4]`$. Dado que tenemos solamente una variable, ambos contrastes tienen el mismo $p-valor$.
+
+Probamos algunos diagnósticos para comprobar si el modelo se encuentra en buenas condiciones. R `base` tiene una forma insuperable de mostrar el diagnóstico de un modelo; en pocas líneas puede decirnos un montón de información sobre los residuales. La única desventaja es que los resultados los da en inglés y las gráficas son difíciles de manipular. Existen [otras](https://drsimonj.svbtle.com/visualising-residuals) formas de hacer los diagnósticos con `ggplot`, pero es demasiado trabajo para lo que queremos.
+
+Si ponemos `plot(modelo_a)` nos da cuatro diagnósticos: `r tippy("residuales vs valores ajustados,", "Residuals vs Fitted")` `r tippy("gráfico Q-Q,", "Normal Q-Q")` `r tippy("gráfico escala-ubicación", "Scale-Location")` y `r tippy("residuales vs potencial.", "Residuals vs Leverage")`. 
+
+```{r}
+# Especificamos que queremos los cuatro diagnósticos en una solo panel de 2x2.
+par(mfrow = c(2, 2))
+
+# Imprimimos los diagnósticos
+plot(modelo_a)
+```
+
+Veamos qué significa cada uno.
+
+#### Residuales vs valores ajustados
+
+Esta gráfica muestra si los `r tippy("residuales", "Los remanentes de la variable de respuesta después de ajustar un modelo. También entendidos como la distancia de cada observación hacia la línea de ajuste.")` tienen patrones no-lineales. Puede que exista una relación no-lineal entre las variables explicativas y la variable de respuesta y esta gráfica nos ayuda a saber si el modelo no captura esa información. Si en la gráfica se muestran los puntos dispersos por todo el cuadro, es una buena señal de que no existen relaciones no-lineales.
+
+En nuestro modelo, los puntos se ven sin un patrón específico, salvo por la observación `3`. Primera señal de que algo no anda bien.
+
+```{r res_vs_fitted}
+plot(modelo_a, which = 1)
+```
+
+#### Quantiles teoréticos
+
+El gráfico Q-Q muestra si los residuales distribuyen aproximadamente como una normal. Los residuales que siguen este patrón se ajustan bien a la línea punteada.
+
+De nuevo, casi todos lo datos se ven bien con excepción de la observación `3`.
+
+```{r}
+plot(modelo_a, which = 2)
+```
+
+#### Escala-Ubicación
+
+También llamada `r tippy("Dispersión-Ubicación,", "Spread-Location")` sirve para revisar si se cumple el supuesto de `r tippy("homocedasticidad.", "Igualdad de varianzas")` En otras palabras, muestra si los residuales se distribuyen equitativamente a lo largo de los rangos de los predictores. Eso se hace con con la raíz cuadrada de los residuales estandarizados contra los valores ajustados modelo. Lo que se espera de un buen modelo es que se vea una línea casi horizontal con puntos distribuidos aleatoriamente o sin algún patrón en particular. Cualquier otra cosa es mala señal.
+
+En nuestro caso, de nuevo el `3` provoca que la línea roja se distorsione.
+
+```{r}
+plot(modelo_a, which = 3)
+```
+
+#### Residuales vs potencial
+
+Finalmente, esta gráfica ayuda a identificar si existen casos que influyen en el modelo. No todos los valores atípicos potencialmente influyen en una regresión lineal, incluso si se llegaran a presentar como valores extremos. Esto implica que hay resultados que no necesariamente cambian en caso de excluir o incluirlos del análisis. No son influyentes si siguen el patrón general y no hacen mucho ruido.
+
+Por otra parte, hay otros valores que podrían influir mucho en el modelo incluso si parece que están dentro del rango razonable de valores. Pueden ser tan extremos que incluso pueden alterar el resultado del análisis al excluirlos. Es decir, puede que no sigan el patrón general.
+
+A diferencia de las otras gráficas, el patrón en la que se dispersan los puntos no es importante. En cambio, usaremos la `r tippy("distancia de Cook", "Mide cómo cambia el vector de estimadores beta cuando se elimina cada observación")` para detectar a las observaciones influyentes. Entre más alto el puntaje, más influyente es. En el gráfico se dibujan con líneas punteadas las distancas mayores a `0.5` y `1`. En general, se considera a un valor como atípico influyente si la distancia de Cook es mayor a `1`.
+
+En nuestra gráfica vemos que el número `3` tiene una distancia mayor a `1` y, por lo tanto, deberíamos observar un cambio en los resultados del modelo al excluir este valor.
+
+```{r}
+plot(modelo_a, which = 5)
+```
+
+#### Reajustando modelo
+
+¿Cuál es ese valor `3` que hace tanto ruido? Hay dos formas de averiguarlo. La más obvia y fácil es seleccionarlo desde `ciga` mediante la sintaxis `data.frame[índice_fila, índice_columna]`. Con R `base` es posible ver una observación con todas las columnas con la sintaxis `data.frame[índice_fila, ]`.
+
+```{r}
+ciga[3, ]
+```
+
+Podemos ver que es la marca `r ciga$Marca[3]`. La otra forrma es agregar la función `geom_text` a nuestro `graf_a`. Para ello agregamos una capa con `+` y como argumentos usamos `aes(label = texto)` para poner la `Marca`, `vjust` para que el texto lo mande abajo del punto y `hjust` para que lo envíe a la izquierda.
+
+```{r}
+graf_a +
+  geom_text(aes(label = Marca), vjust = 1, hjust = 1)
+```
+
+De esta manera, ya comprobamos por dos vías distintas que la marca `r ciga$Marca[3]` causa mucho ruido. Crearemos una nueva `data.frame` sin esa observación indicando a R que no queremos la observación `3` con un signo de `-` en la sintaxis `data.frame[-índice_fila, ]`.
+
+```{r ciga_sin_out}
+ciga_2 = ciga[-3, ]
+```
+
+Ahora repitamos todo el proceso anterior con `ciga_2`
+
+```{r lm_alq_sin_out}
+modelo_a_sin_out = lm(CO ~ Alq, ciga_2)
+
+summary(modelo_a_sin_out)
+```
+
+La ecuación de regresión cambió a $CO = `r modelo_a_sin_out[["coefficients"]][[1]]` + `r modelo_a_sin_out[["coefficients"]][[2]]` * Alq$. Ahora el $93.34\%$ de la variabilidad es explicada por el modelo, dado que la `r tippy("bondad de ajuste", "Otro nombre para el coeficiente de determinación")` es $R^2 = `r summary(modelo_a_sin_out)[["r.squared"]]`$.
+
+El diagrama de dispersión ahora se ve de la forma siguiente:
+
+```{r scatter_sin_out}
+ggplot(ciga_2, aes(Alq, CO)) +
+  geom_point() +
+  geom_abline(intercept = modelo_a_sin_out$coefficients[[1]],
+              slope = modelo_a_sin_out$coefficients[[2]])
+```
+
+¡Se ve bien! Ahora veamos el diagnóstico de residuales.
+
+```{r diagnostico_sin_out}
+par(mfrow = c(2, 2))
+plot(modelo_a_sin_out)
+```
+
+En esta ocasión, cada gráfica se muestra como uno esperaría de un buen modelo. Incluso podemos que las líneas puntadas de la distancia de Cook casi no se ven porque todas las observaciones se comportan dentro del patrón general.
+
+Ahora bien, muy bonitas las gráficas y bastante ilustrativa la manipulación de datos, pero ¿a dónde vamos con todo esto? ¿Qué significa que ahora tengamos un buen modelo? Todavía no podemos sacar una conclusión final porque falta analizar el resto de las variables con respecto al CO. 
+
+Por lo pronto, con nuestro modelo del alquitrán sin el dato atípico, podemos decir que con cada cambio en una unidad de alquitrán, el CO emitido al fumar aumenta en $0.92813$.
+
+### Regresión para la Nicotina
+
+Toca ajustar la regresión para la nicotina. Realizamos el mismo ejercicio que con el alquitrán.
+
+```{r modelo_nicotina}
+modelo_n = lm(CO ~ Nic, ciga)
+
+summary(modelo_n)
+```
+
+```{r graf_n}
+graf_n = ggplot(ciga, aes(Nic, CO)) +
+  geom_point() +
+  geom_abline(intercept = modelo_n$coefficients[[1]],
+              slope = modelo_n$coefficients[[2]])
+graf_n
+```
+```{r diag_nicotina}
+par(mfrow = c(2, 2))
+plot(modelo_n)
+```
+
+Vemos que otra vez el número `3` vuelve a hacer de las suyas. Veamos cómo se comporta nuestro modelo con nicotina sin la `Marca` `r ciga[3, 1]`.
+
+#### Nicotina sin atípico
+
+```{r modelo_n_sin_out}
+modelo_n_sin_out = lm(CO ~ Nic, ciga_2)
+
+summary(modelo_n_sin_out)
+
+ggplot(ciga_2, aes(Nic, CO)) +
+  geom_point() +
+  geom_abline(intercept = modelo_n_sin_out$coefficients[[1]],
+              slope = modelo_n_sin_out$coefficients[[2]])
+
+par(mfrow = c(2, 2))
+plot(modelo_n_sin_out)
+```
+
+Ahora también vemos que se comporta mejor, salvo por algo extraño que ocurre con el gráfico de disperción-ubicación. En general se ajusta bien.
+
+### Regresión para el Peso
+
+Nuevamente repetimos el ejercicio con todos los datos de `ciga`.
+
+```{r modelo_peso}
+modelo_p = lm(CO ~ Pes, ciga)
+
+summary(modelo_p)
+
+ggplot(ciga, aes(Pes, CO)) +
+  geom_point() +
+  geom_abline(intercept = modelo_p$coefficients[[1]],
+              slope = modelo_p$coefficients[[2]])
+
+par(mfrow = c(2, 2))
+plot(modelo_p)
+```
+
+
+En el caso del peso, podemos ver que la relación con el CO es algo significativa, dado que su $p-valor$ es $p = `r summary(modelo_p)[["coefficients"]][2,4]`$. En el diagnóstico de sus residuales podemos ver que puede que exista una relación no-lineal no captada por el modelo. Sin embargo, no hay ningún dato atípico suficientemente influyente en el modelo como para eliminarlo.
+
+#### Peso sin atípico
+
+Solo por curiosidad vamos a ver cómo se comporta el modelo sin nuestro atípico favorito.
+
+```{r}
+modelo_p_sin_out = lm(CO ~ Pes, ciga_2)
+
+summary(modelo_p_sin_out)
+
+ggplot(ciga, aes(Pes, CO)) +
+  geom_point() +
+  geom_abline(intercept = modelo_p_sin_out$coefficients[[1]],
+              slope = modelo_p_sin_out$coefficients[[2]])
+
+par(mfrow = c(2, 2))
+plot(modelo_p_sin_out)
+```
+
+Aquí vemos que el modelo empeoró porque el peso se volvió irrelevante para el modelo y el coeficiente de determinación sin la marca `r ciga[3,1]` es de $R^2_{sin_atípico} = `r summary(modelo_p_sin_out)[["r.squared"]]`$ en comparación con todos los datos $R^2_{todos} = `r summary(modelo_p)[["r.squared"]]`$.
+
+Moraleja: si los datos te dicen que no está roto, no lo intentes reparar. De cualquier forma, no hay mucho qué rescatar. Hora de crear un modelo con todas las variables.
+
+## Regresión múltiple
+
+Ajustemos un modelo con todas las variables a la vez. Esto se llama modelo de regresión múltiple, cuya forma es:
+
+$$Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_3$$
+
+Visto de forma más aterrizada:
+
+$$CO = \beta_0 + \beta_1Alq + \beta_2Nic + \beta_3Pes$$
+
+El desarrollo y análisis de un modelo de regresión múltiple es similar al de la regresión simple. Solo tenemos que cambiar la forma en que escribimos el argumento `formula`. Simplemente seguimos la sintaxis `formula = var.respuesta ~ var.indep1 + var.indep2 + var.indep3`
+
+Aquí vamos.
+
+```{r reg_multiple}
+modelo_m = lm(CO ~ Alq + Nic + Pes, ciga)
+
+summary(modelo_m)
+```
+```{r, include=FALSE}
+resumen = summary(modelo_m)
+p_value_var = pf(resumen$fstatistic[1L], resumen$fstatistic[2L], resumen$fstatistic[3L], lower.tail = FALSE)
+```
+
+Bastante raro, ¿no? Habíamos visto que por separado todas las variables (salvo el peso) explicaban bien el aumento de CO. Pero ahora parece distinto. Vayamos por partes.
+
+En cuanto a lo general, el modelo ajustado es $CO = `r modelo_m[["coefficients"]][1]` + `r modelo_m[["coefficients"]][2]`*Alq + `r modelo_m[["coefficients"]][3]`*Nic + `r modelo_m[["coefficients"]][4]`*Pes$. El coeficiente de determinación es $R^2 = `r summary(modelo_m)[["r.squared"]]`$ y el análisis de la varianza es altamente significativo con $p = `r p_value_var`$. 
+
+En particular, solamente el coeficiente del alquitrán es significativamente distinto de cero ($p = `r resumen[["coefficients"]][2,4]`$). Lo que esto significa es que el resto de las variables no aportan información adicional a la que ya tiene el alquitrán. Pero, ¿por qué?. 
+
+### Correlaciones
+
+Uno de los supuestos más importantes de la regresión lineal es que las variables sean independientes. Por lo tanto, la primera sospecha nos lleva a pensar que las variables están relacionadas entre sí. Veamos una matriz de correlaciones con la función `cor()` para ver si nuestra sospecha es cierta. Solo queremos ver la correlación entre las variables explicativas, por lo que para seleccionar esas columnas ahora seguiremos la sintaxis `data.frame[, índice_columna]`.
+
+```{r correlación}
+cor(ciga[, 2:4])
+```
+
+Pues sí, el alquitrán y la nicotina están altamente correlacionadas. Esto implica que los predictores están fuertemente relacionados entre sí y no es posible separar sus efectos. Veamos qué nos dicen los diagnósticos 
+
+```{r diag_reg_mult}
+par(mfrow = c(2, 2))
+plot(modelo_m)
+```
+
+Debido a que la marca `r ciga[3,1]` dio problemas con el alquitrán y la nicotina por separado, es de esperar que también sea problemático en este modelo.
+
+#### Regresión sin atípico
+
+Con la salvedad de que el modelo presenta problemas de no-independencia entre variables, veamos cómo se comporta el modelo sin el atípico.
+
+```{r}
+modelo_m_sin_out = lm(CO ~ Alq + Nic + Pes, ciga_2)
+
+summary(modelo_m_sin_out)
+
+par(mfrow = c(2, 2))
+plot(modelo_m_sin_out)
+```
+
+Mejoró el modelo, pero sigue indicando que las demás variables no explican nada que el alquitrán no haga.
+
+¿Qué sigue? Por ahora, darle la vuelta a la página y analizar un nuevo modelo con la variable `Light`.
+
+### Variable nominal
+
+***

@@ -2,3 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
+.mov
+.docx
+.DS_Store
+T3.Regresion/*.mov
+T3.Regresion/.DS_Store
+T6.ANOVA/.DS_Store
+T8.TdContingencia/.DS_Store
